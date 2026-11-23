@@ -313,10 +313,7 @@ class App(tk.Tk):
         self.max_step = 0
         self._build()
         self._enable_drop()
-        if self.settings.seller.name:
-            self.show_step(0)
-        else:
-            self.edit_settings(first_run=True)
+        self.show_step(0)
         if initial_pdf:
             self.after(500, lambda: self.load_pdf(Path(initial_pdf)))
 
@@ -348,7 +345,7 @@ class App(tk.Tk):
             lbl.pack(side="left", fill="x", expand=True)
             for w in (f, num, lbl):
                 w.bind("<Button-1>", lambda _e, i=i: self.show_step(i)
-                       if i <= self.max_step and self.settings.seller.name else None)
+                       if i <= self.max_step else None)
             self.step_btns.append((f, num, lbl))
 
         foot = ttk.Frame(side, style="Side.TFrame", padding=16)
@@ -545,12 +542,14 @@ class App(tk.Tk):
         self.calc_lbl.grid(row=0, column=2, rowspan=3, sticky="nsw", padx=20)
         nb.add(pf, text="Positionen und Summen")
 
-        sf = ttk.Frame(nb, padding=16)
-        ttk.Label(sf, style="Muted.TLabel",
-                  text="Diese Angaben stammen aus den Stammdaten. Ändern über „Stammdaten …“ links unten."
-                  ).pack(anchor="w", pady=(0, 8))
-        self.seller_lbl = ttk.Label(sf, justify="left")
-        self.seller_lbl.pack(anchor="w")
+        sf = ttk.Frame(nb)
+        ttk.Label(sf, style="Muted.TLabel", padding=(16, 12, 16, 0),
+                  text="Ihr eigenes Büro. Aus dem PDF gelesen oder von der letzten Rechnung gemerkt.").pack(anchor="w")
+        self.seller_form = Form(sf, SELLER_FIELDS, columns=2, width=24)
+        self.seller_form.pack(fill="x")
+        self.save_seller = tk.BooleanVar(value=True)
+        ttk.Checkbutton(sf, padding=(16, 4), variable=self.save_seller,
+                        text="Für die nächsten Rechnungen merken").pack(anchor="w")
         nb.add(sf, text="Rechnungssteller")
         self.refresh_seller()
         self.refresh_buyers()
@@ -592,9 +591,7 @@ class App(tk.Tk):
             pass
 
     def refresh_seller(self):
-        s = self.settings.seller
-        self.seller_lbl.configure(text="\n".join(
-            f"{lbl.rstrip(' *')}:  {getattr(s, k) or '–'}" for k, lbl in SELLER_FIELDS))
+        pass
 
     def refresh_buyers(self):
         self.buyer_pick.configure(values=[b.name for b in self.settings.buyers])
@@ -625,10 +622,11 @@ class App(tk.Tk):
         self.file_lbl.configure(text=f"Zuletzt gewählt: {path.name}")
         self.review_file.configure(text=f"Datei: {path}")
         self.fill(inv)
-        warn = any(n.startswith("ACHTUNG") or "kein PDF/A" in n or "nicht" in n for n in notes)
+        warn = any(n.startswith("ACHTUNG") or "ergänzen" in n for n in notes)
         self.notes.show("warn" if warn else "info", "Hinweise zum gelesenen PDF", notes)
         self.status.configure(text="")
         self.show_step(1)
+        self.review_nb.select(3 if any("Rechnungssteller“ ergänzen" in n for n in notes) else 0)
 
     def reset(self):
         self.pdf_path = None
@@ -641,6 +639,8 @@ class App(tk.Tk):
             self.inv_form.set(k, v.strftime("%d.%m.%Y") if k in DATE_FIELDS and v else v)
         for k, _ in BUYER_FIELDS:
             self.buyer_form.set(k, getattr(inv.buyer, k))
+        for k, _ in SELLER_FIELDS:
+            self.seller_form.set(k, getattr(inv.seller, k))
         self.lines.clear()
         for ln in inv.lines or [Line()]:
             self.lines.add(ln)
@@ -656,7 +656,10 @@ class App(tk.Tk):
         b.country = (b.country or "DE").upper()
         b.buyer_reference = inv.buyer_reference
         inv.buyer = b
-        inv.seller = self.settings.seller
+        s = Seller(**{k: self.seller_form.get(k) for k, _ in SELLER_FIELDS})
+        s.iban = s.iban.replace(" ", "").upper()
+        s.country = (s.country or "DE").upper()
+        inv.seller = s
         inv.lines = self.lines.lines()
         try:
             for k, v in self.sum_vars.items():
@@ -689,6 +692,8 @@ class App(tk.Tk):
         out_pdf, _, _ = output_paths(self.pdf_path)
         if out_pdf.exists() and not messagebox.askyesno(APP, f"„{out_pdf.name}“ existiert bereits. Überschreiben?"):
             return
+        if self.save_seller.get() and inv.seller.name:
+            self.settings.seller = inv.seller
         if self.save_buyer.get() and inv.buyer.name:
             self.settings.upsert_buyer(Buyer(**{f.name: getattr(inv.buyer, f.name) for f in fields(Buyer)}))
         self.settings.write_xrechnung = self.xr_var.get()
@@ -748,6 +753,16 @@ class App(tk.Tk):
         self.show_step(2)
 
 
+def _close_splash():
+    try:
+        import pyi_splash  # only present in the built exe
+        pyi_splash.close()
+    except Exception:
+        pass
+
+
 def main():
     pdf = next((a for a in sys.argv[1:] if a.lower().endswith(".pdf")), None)
-    App(pdf).mainloop()
+    app = App(pdf)
+    app.after(100, _close_splash)
+    app.mainloop()

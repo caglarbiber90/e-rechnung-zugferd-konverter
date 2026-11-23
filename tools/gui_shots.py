@@ -1,8 +1,7 @@
 """Drive the GUI through all three steps on the fictitious sample and save screenshots.
 Uses a temporary APPDATA so real master data is never touched.
 Usage: py -3 tools/gui_shots.py <out_dir> [--erststart]
-  --erststart  start without master data: shows the welcome page, the missing-field
-               message, then fills in the fictitious seller and continues."""
+  --erststart  start without saved master data (first use): the seller is read from the PDF."""
 import os, shutil, sys, tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,19 +52,8 @@ def shot(name):
     windll.gdi32.GetDIBits(mdc, bmp, 0, h, buf, byref(bi), 0)
     Image.frombuffer("RGB", (w, h), buf, "raw", "BGRX", 0, 1).save(out / name)
     windll.gdi32.DeleteObject(bmp); windll.gdi32.DeleteDC(mdc); windll.user32.ReleaseDC(hwnd, hdc)
-def fill_seller():
-    from erechnung.settings import Settings
-    sample = Settings.load(ROOT / "tests/sample/stammdaten.json").seller
-    for f in app.set_forms:
-        for k in f.vars:
-            f.set(k, getattr(sample, k))
-    app.settings.buyers = Settings.load(ROOT / "tests/sample/stammdaten.json").buyers
-
-
-first = [lambda: shot("0_willkommen.png"), lambda: app.save_settings(), lambda: shot("0b_fehlt.png"),
-         fill_seller, lambda: app.save_settings()] if FIRST else []
-seq = first + [lambda: shot("1_waehlen.png"), lambda: app.load_pdf(pdf), lambda: shot("2_pruefen.png"),
-       lambda: app.review_nb.select(2), lambda: shot("2b_positionen.png"), lambda: app.review_nb.select(1), lambda: shot("2c_empfaenger.png"),
+seq = [lambda: shot("1_waehlen.png"), lambda: app.load_pdf(pdf), lambda: shot("2_pruefen.png"),
+       lambda: app.review_nb.select(2), lambda: shot("2b_positionen.png"), lambda: app.review_nb.select(1), lambda: shot("2c_empfaenger.png"), lambda: app.review_nb.select(3), lambda: shot("2d_rechnungssteller.png"),
        lambda: app.generate()]
 def step(i=0):
     if i < len(seq): seq[i](); app.after(700, lambda: step(i + 1))

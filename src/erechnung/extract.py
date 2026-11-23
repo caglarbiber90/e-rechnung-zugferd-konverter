@@ -14,7 +14,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from .model import Invoice, Line, money
+from .model import Invoice, Line, Seller, money
 
 MONTHS = {m: i for i, m in enumerate(
     ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august",
@@ -154,13 +154,52 @@ class WordHonorarTemplate:
             note.append(f"Leistungsabruf: {call_off}.")
         inv.note = " ".join(note)
 
-        m = re.search(r"IBAN:?\s*([A-Z]{2}\d{2}[\d ]{10,40})", text)
-        if m:
-            notes.append("IBAN im PDF: " + m.group(1).strip())
         return inv, notes
 
 
 EXTRACTORS = [WordHonorarTemplate]
+
+
+EMAIL = r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"
+
+
+def extract_seller(text: str, buyer_email: str = "") -> Seller:
+    """Seller data that usually appears on any German invoice (letterhead, footer, bank line)."""
+    s = Seller()
+    m = re.search(r"Steuer\s*[-–]?\s*Nr\.?\s*:?\s*(\d{2,3}/\d{3}/\d{4,5})", text, re.I)
+    if m:
+        s.tax_no = m.group(1)
+    m = re.search(r"\b(DE\s?\d{3}\s?\d{3}\s?\d{3})\b", text)
+    if m:
+        s.vat_id = m.group(1).replace(" ", "")
+    m = re.search(r"IBAN:?\s*([A-Z]{2}\d{2}(?:\s?[\dA-Z]{4}){3,7}(?:\s?[\dA-Z]{1,3})?)", text)
+    if m:
+        s.iban = m.group(1).replace(" ", "")
+    m = re.search(r"BIC:?\s*([A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b", text)
+    if m:
+        s.bic = m.group(1)
+    m = re.search(r"\b(HRB|HRA)\s?(\d{3,6})", text)
+    if m:
+        s.register_id = f"{m.group(1)} {m.group(2)}"
+    for em in re.findall(EMAIL, text):
+        if em.lower() != (buyer_email or "").lower():
+            s.contact_email = em
+            break
+    m = re.search(r"(?:Tel\.?|Telefon|Fon)?\s*:?\s*((?:\+|00)49[\d /-]{6,20}\d)", text)
+    if m:
+        s.phone = " ".join(m.group(1).split())
+    # sender line of a DIN 5008 letter: "Name · Street 1 · 12345 City" (also with | or -)
+    for line in text.splitlines()[:15]:
+        parts = [x.strip() for x in re.split(r"\s[·|•–-]\s", line) if x.strip()]
+        if len(parts) >= 3:
+            zm = re.match(r"(\d{5})\s+(.+)", parts[-1])
+            if zm and re.search(r"\d", parts[-2]):
+                s.name, s.street = parts[0], parts[-2]
+                s.zip, s.city = zm.groups()
+                break
+    if s.name:
+        s.account_name = s.name
+    return s
 
 
 def extract(path: Path) -> tuple[Invoice, list[str], str]:
@@ -171,8 +210,11 @@ def extract(path: Path) -> tuple[Invoice, list[str], str]:
     for ex in EXTRACTORS:
         if ex.matches(text):
             inv, notes = ex.extract(text)
+            inv.seller = extract_seller(text, inv.buyer.email)
             return inv, notes, ex.name
-    return Invoice(), ["Unbekanntes Rechnungslayout: bitte alle Felder von Hand ausfüllen."], "-"
+    inv = Invoice()
+    inv.seller = extract_seller(text)
+    return inv, ["Unbekanntes Rechnungslayout: bitte alle Felder von Hand ausfüllen."], "-"
 
 
 def iban_in_pdf(path: Path) -> str:

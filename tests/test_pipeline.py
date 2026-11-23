@@ -63,3 +63,20 @@ def test_en16931_without_buyer_reference_is_ok():
     inv, _, _ = sample_invoice()
     inv.buyer_reference = ""
     assert validate(build_cii(inv, GUIDELINE_EN16931)).accepted
+
+
+def test_first_use_without_master_data(tmp_path):
+    """No saved master data: seller comes from the PDF, conversion works right away."""
+    from erechnung.core import propose
+    from erechnung.settings import Settings
+    src = tmp_path / "Musterrechnung.pdf"
+    shutil.copy(SAMPLE / "Musterrechnung.pdf", src)
+    inv, notes = propose(src, Settings())
+    s = inv.seller
+    assert (s.name, s.street, s.zip, s.city) == ("Musterplan Architekten GmbH", "Musterstraße 12", "60311",
+                                                 "Frankfurt am Main")
+    assert (s.vat_id, s.tax_no, s.iban, s.bic) == ("DE123456789", "012/345/67890", "DE02120300000000202051",
+                                                   "BYLADEM1001")
+    assert not any("ergänzen" in n for n in notes)
+    oc = finalize(inv, src)
+    assert oc.ok, (oc.problems, oc.result and [m.code for m in oc.result.errors])

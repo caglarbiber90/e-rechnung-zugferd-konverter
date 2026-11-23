@@ -27,8 +27,28 @@ def draw(size: int) -> Image.Image:
     return im.resize((size, size), Image.LANCZOS)
 
 
+def splash() -> Image.Image:
+    """Start-up picture shown by the exe while it unpacks (PyInstaller splash screen)."""
+    from PIL import ImageFont
+    w, h = 460, 150
+    im = Image.new("RGB", (w, h), (250, 250, 248))
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, w - 1, h - 1), outline=(230, 229, 225), width=2)
+    im.paste(draw(84), (32, 33), draw(84))
+
+    def font(name, size):
+        try:
+            return ImageFont.truetype(name, size)
+        except OSError:
+            return ImageFont.load_default()
+    d.text((140, 44), "E-Rechnung-Konverter", fill=(30, 33, 38), font=font("segoeuib.ttf", 24))
+    d.text((140, 84), "Programm wird gestartet …", fill=(106, 111, 119), font=font("segoeui.ttf", 16))
+    return im
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    splash().save(OUT / "splash.png")
     draw(36).save(OUT / "logo.png")
     draw(256).save(OUT / "app.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (256, 256)])
     draw(256).save(OUT / "app-256.png")

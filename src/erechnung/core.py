@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import fields
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -10,16 +11,34 @@ from pathlib import Path
 from . import pdf as pdfmod
 from .checks import check
 from .cii import GUIDELINE_EN16931, GUIDELINE_XRECHNUNG, build_cii
-from .extract import extract, iban_in_pdf
-from .model import Invoice
+from .extract import extract
+from .model import Invoice, Seller
 from .settings import Settings
 from .validator import Result, report_html, validate
 
 
 def propose(pdf_path: Path, settings: Settings) -> tuple[Invoice, list[str]]:
     inv, notes, ex_name = extract(pdf_path)
-    notes = [f"Erkanntes Layout: {ex_name}"] + notes
+    if ex_name == "-":
+        notes = notes or ["Unbekanntes Rechnungslayout: bitte die Felder von Hand ausfüllen."]
+    # seller: remembered master data first, gaps filled from the PDF
+    from_pdf = inv.seller
     inv.seller = copy.deepcopy(settings.seller)
+    filled = []
+    for f in fields(Seller):
+        if not getattr(inv.seller, f.name) and getattr(from_pdf, f.name):
+            setattr(inv.seller, f.name, getattr(from_pdf, f.name))
+            filled.append(f.name)
+    if filled and not settings.seller.name:
+        notes.append("Ihre Büroangaben wurden aus dem PDF gelesen und werden nach dem Erzeugen gemerkt.")
+    if from_pdf.iban and settings.seller.iban and from_pdf.iban != settings.seller.iban.replace(" ", ""):
+        notes.append("ACHTUNG: Die IBAN im PDF weicht von der gespeicherten IBAN ab. Bitte prüfen.")
+    missing = [lbl for k, lbl in (("name", "Firmenname"), ("street", "Straße"), ("zip", "PLZ"), ("city", "Ort"),
+                                  ("iban", "IBAN")) if not getattr(inv.seller, k)]
+    if not (inv.seller.vat_id or inv.seller.tax_no):
+        missing.append("USt-IdNr. oder Steuernummer")
+    if missing:
+        notes.append("Bitte im Reiter „Rechnungssteller“ ergänzen (steht nicht im PDF): " + ", ".join(missing) + ".")
     known = settings.find_buyer(inv.buyer.name)
     if known:
         for f in ("street", "zip", "city", "country", "vat_id", "email"):
@@ -28,19 +47,12 @@ def propose(pdf_path: Path, settings: Settings) -> tuple[Invoice, list[str]]:
         inv.buyer.buyer_reference = known.buyer_reference
         if not inv.buyer_reference:
             inv.buyer_reference = known.buyer_reference
-        notes.append(f"Kundenstammdaten für '{known.name}' übernommen.")
-    elif inv.buyer.name:
-        notes.append(f"Kunde '{inv.buyer.name}' ist noch nicht in den Stammdaten.")
     if not inv.buyer_reference:
-        notes.append("Käuferreferenz (Leitweg-ID oder Bestellzeichen des Kunden) weder im PDF noch in den "
-                     "Kundenstammdaten gefunden. Für ZUGFeRD freiwillig, für XRechnung Pflicht.")
-    pdf_iban = iban_in_pdf(pdf_path)
-    if pdf_iban and settings.seller.iban and pdf_iban != settings.seller.iban.replace(" ", ""):
-        notes.append("ACHTUNG: Die IBAN im PDF weicht von der IBAN in den Stammdaten ab.")
+        notes.append("Keine Käuferreferenz gefunden (nur für XRechnung Pflicht).")
     part = pdfmod.pdfa_part(pdf_path)
     if not part:
-        notes.append("Das PDF ist kein PDF/A. Empfehlung: in Word 'Speichern unter > PDF > Optionen > "
-                     "PDF/A-kompatibel' wählen und dieses PDF verwenden.")
+        notes.append("Das PDF ist kein PDF/A. Tipp: in Word beim Speichern als PDF unter „Optionen“ "
+                     "„PDF/A-kompatibel“ anhaken.")
     elif not part.startswith("3"):
         notes.append(f"Das PDF ist PDF/A-{part}. Für ZUGFeRD wird PDF/A-3 erwartet; die Ausgabe wird als "
                      "PDF/A-3 gekennzeichnet, die Konformität wird aber nicht geprüft.")

@@ -136,6 +136,12 @@ def parser() -> argparse.ArgumentParser:
 
 def main():
     argv = sys.argv[1:]
+    if argv:  # command line use: no start-up picture
+        try:
+            import pyi_splash
+            pyi_splash.close()
+        except Exception:
+            pass
     if argv[:1] == ["--selftest"]:
         sys.exit(cmd_selftest(argv[1:]))
     if not argv or (len(argv) == 1 and argv[0].lower().endswith(".pdf")):

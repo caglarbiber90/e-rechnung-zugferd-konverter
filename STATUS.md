@@ -3,7 +3,7 @@
 Ziel: Kostenloser, quelloffener E-Rechnung-Konverter (PDF zu ZUGFeRD EN 16931, optional XRechnung) als
 einzelne Windows-.exe, Kommandozeile und Python-Paket, mit Pflicht-Prüfformular und KoSIT-Prüfung ohne Java.
 
-Stand 23.11.2026 (Version 0.1.1):
+Stand 23.11.2026 (Version 0.1.2):
 - Exe gebaut und auf der fiktiven Musterrechnung getestet, auch per Gegenprobe mit dem
   Java-KoSIT-Validator 1.6.3 (gleiches Ergebnis, gleiche Regelcodes in 11 Testdateien).
 - Alles für Anwender auf Deutsch, neutrales eigenes Symbol, keine Firmenlogos.

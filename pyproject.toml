@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "e-rechnung-zugferd-konverter"
-version = "0.1.1"
+version = "0.1.2"
 description = "PDF-Rechnung in E-Rechnung umwandeln: ZUGFeRD 2.x / Factur-X (EN 16931) und XRechnung erzeugen und nach dem KoSIT-Regelwerk prüfen, ohne Java. Windows-Programm, Kommandozeile und Python-Bibliothek."
 readme = "README.md"
 license = "MIT"

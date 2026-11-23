@@ -17,8 +17,11 @@ a = Analysis(
     excludes=["PIL", "fitz", "pymupdf", "numpy", "matplotlib", "pytest", "reportlab"],
 )
 pyz = PYZ(a.pure)
+# shown immediately on double-click while the one-file exe unpacks; closed by the program
+splash = Splash(str(root / "src" / "erechnung" / "daten" / "icon" / "splash.png"),
+                binaries=a.binaries, datas=a.datas, text_pos=None, always_on_top=False)
 exe = EXE(
-    pyz, a.scripts, a.binaries, a.datas, [],
+    pyz, a.scripts, splash, splash.binaries, a.binaries, a.datas, [],
     name="E-Rechnung-Konverter",
     console=False,
     icon=icon,

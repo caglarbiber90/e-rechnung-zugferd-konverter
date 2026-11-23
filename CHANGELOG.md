@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.1.2 (23.11.2026)
+
+- Keine Einrichtung mehr beim ersten Start: Das Programm öffnet direkt mit „PDF-Rechnung wählen“.
+- Die Angaben zum eigenen Büro (Anschrift aus der Absenderzeile, Steuernummer, USt-IdNr., IBAN, BIC, Telefon, E-Mail, Handelsregister) werden aus dem PDF gelesen.
+- Der Reiter „Rechnungssteller“ im Prüfformular ist bearbeitbar; die Angaben werden nach dem Erzeugen gemerkt. Fehlt etwas, öffnet sich dieser Reiter und ein Hinweis nennt die fehlenden Felder.
+- Kürzere, klarere Hinweise nach dem Einlesen.
+
 ## 0.1.1 (23.11.2026)
 
 - Erster Start: Die Stammdaten werden jetzt im Programmfenster abgefragt, übersichtlich in vier Bereichen (Büro, Steuer und Register, Ansprechpartner, Bankverbindung), statt in einem separaten Fenster in der Bildschirmecke.

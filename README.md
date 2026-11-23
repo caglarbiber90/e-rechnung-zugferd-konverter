@@ -52,7 +52,7 @@ darin. So kann die Buchhaltung des Kunden die Rechnung automatisch verarbeiten.
 - **Amtliche Prüfung nach dem KoSIT-Regelwerk** (XRechnung 3.0.2 mit EN-16931-Regeln) vor dem Speichern.
   Fehler werden in verständlichem Deutsch erklärt.
 - **Prüfbericht** als HTML neben jeder E-Rechnung.
-- **Stammdaten** des eigenen Betriebs und der Kunden werden einmal eingegeben und gespeichert.
+- **Keine Einrichtung nötig**: Die Angaben zum eigenen Betrieb (Steuernummer, USt-IdNr., IBAN, BIC, Kontakt) werden ebenfalls aus dem PDF gelesen und nach der ersten Rechnung gemerkt, ebenso die Kunden.
 - **XRechnung** (CII) optional für öffentliche Auftraggeber.
 - **Kommandozeile mit JSON-Ausgabe** für Automatisierung, Skripte und KI-Agenten.
 - **Quelloffen** unter MIT-Lizenz.
@@ -61,8 +61,9 @@ darin. So kann die Buchhaltung des Kunden die Rechnung automatisch verarbeiten.
 
 Die fertige Datei `E-Rechnung-Konverter.exe` gibt es unter
 [**Releases**](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/releases/latest).
-Herunterladen, doppelklicken, fertig. Beim ersten Start fragt das Programm einmalig die Daten des
-eigenen Betriebs ab.
+Herunterladen, doppelklicken, PDF hineinziehen. Es gibt keine Einrichtung: Was nicht im PDF steht
+(zum Beispiel eine Anschrift, die in Word nur als Bild im Briefkopf steckt), ergänzt man einmal im
+Prüfformular, danach merkt sich das Programm die Angaben.
 
 > Windows SmartScreen kann bei neuen, nicht signierten Programmen warnen. Über „Weitere Informationen“
 > und „Trotzdem ausführen“ lässt sich das Programm starten. Wer sichergehen will, baut die Datei
