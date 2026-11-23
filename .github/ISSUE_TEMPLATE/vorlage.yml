@@ -1,0 +1,20 @@
+name: Neue Rechnungsvorlage oder Wunsch
+description: Eine weitere Rechnungsvorlage soll erkannt werden, oder eine Funktion fehlt.
+labels: ["wunsch"]
+body:
+  - type: markdown
+    attributes:
+      value: "**Bitte nur erfundene Beispieldaten verwenden**, niemals echte Rechnungen."
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Beschreibung
+      description: Welche Vorlage oder Funktion? Wer würde davon profitieren?
+    validations:
+      required: true
+  - type: textarea
+    id: beispiel
+    attributes:
+      label: Beispieltext der Rechnung (erfunden)
+      description: Den Text einer erfundenen Musterrechnung im gewünschten Layout hier einfügen.
+      render: text

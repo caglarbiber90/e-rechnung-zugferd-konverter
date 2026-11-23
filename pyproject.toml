@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "e-rechnung-zugferd-konverter"
+version = "0.1.0"
+description = "PDF-Rechnung in E-Rechnung umwandeln: ZUGFeRD 2.x / Factur-X (EN 16931) und XRechnung erzeugen und nach dem KoSIT-Regelwerk prüfen, ohne Java. Windows-Programm, Kommandozeile und Python-Bibliothek."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+requires-python = ">=3.12"
+authors = [{ name = "caglarbiber90" }]
+keywords = ["e-rechnung", "zugferd", "xrechnung", "factur-x", "en16931", "kosit", "validator",
+            "rechnung", "pdf", "einvoice", "cii", "wachstumschancengesetz"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Win32 (MS Windows)",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Natural Language :: German",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Office/Business :: Financial :: Accounting",
+]
+dependencies = ["factur-x>=7.10", "lxml>=5", "pypdf>=5", "saxonche>=12.8", "windnd>=1.0.7; sys_platform == 'win32'"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pyinstaller>=6.10", "reportlab", "pillow"]
+
+[project.scripts]
+e-rechnung = "erechnung.cli:main"
+
+[project.urls]
+Quellcode = "https://github.com/caglarbiber90/e-rechnung-zugferd-konverter"
+Fehlermeldungen = "https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+erechnung = ["daten/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

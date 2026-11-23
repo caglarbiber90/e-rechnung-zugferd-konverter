@@ -1,33 +1,33 @@
 {
-  "seller": {
+  "rechnungssteller": {
     "name": "Musterplan Architekten GmbH",
-    "street": "Musterstraße 12",
-    "zip": "60311",
-    "city": "Frankfurt am Main",
-    "country": "DE",
-    "vat_id": "DE123456789",
-    "email": "rechnung@musterplan.example",
-    "tax_no": "012/345/67890",
-    "register_id": "HRB 99999",
-    "legal_info": "Musterplan Architekten GmbH, Geschäftsführerin: Erika Mustermann, HRB 99999, Amtsgericht Frankfurt am Main",
-    "contact": "Max Beispiel",
-    "phone": "+49 69 1234567",
-    "contact_email": "buchhaltung@musterplan.example",
+    "strasse": "Musterstraße 12",
+    "plz": "60311",
+    "ort": "Frankfurt am Main",
+    "land": "DE",
+    "ust_idnr": "DE123456789",
+    "e_rechnung_email": "rechnung@musterplan.example",
+    "steuernummer": "012/345/67890",
+    "handelsregister": "HRB 99999",
+    "rechtliche_angaben": "Musterplan Architekten GmbH, Geschäftsführerin: Erika Mustermann, HRB 99999, Amtsgericht Frankfurt am Main",
+    "ansprechpartner": "Max Beispiel",
+    "telefon": "+49 69 1234567",
+    "ansprechpartner_email": "buchhaltung@musterplan.example",
     "iban": "DE02120300000000202051",
     "bic": "BYLADEM1001",
-    "account_name": "Musterplan Architekten GmbH"
+    "kontoinhaber": "Musterplan Architekten GmbH"
   },
-  "buyers": [
+  "kunden": [
     {
       "name": "Beispiel Immobilien AG",
-      "street": "Beispielweg 5",
-      "zip": "60528",
-      "city": "Frankfurt am Main",
-      "country": "DE",
-      "vat_id": "",
-      "email": "eingangsrechnung@beispiel-immobilien.example",
-      "buyer_reference": "BI-4711"
+      "strasse": "Beispielweg 5",
+      "plz": "60528",
+      "ort": "Frankfurt am Main",
+      "land": "DE",
+      "ust_idnr": "",
+      "e_rechnung_email": "eingangsrechnung@beispiel-immobilien.example",
+      "kaeuferreferenz": "BI-4711"
     }
   ],
-  "write_xrechnung": true
+  "xrechnung_erzeugen": true
 }

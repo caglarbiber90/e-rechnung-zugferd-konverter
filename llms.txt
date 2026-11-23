@@ -1,0 +1,34 @@
+# E-Rechnung-Konverter
+
+> Kostenloses, quelloffenes Windows-Programm, Kommandozeilenwerkzeug und Python-Paket (MIT-Lizenz):
+> wandelt PDF-Rechnungen (z. B. aus Word) in E-Rechnungen nach ZUGFeRD 2.x / Factur-X im Profil
+> EN 16931 um, erzeugt optional XRechnung 3.0 (CII) und prüft jede Rechnung nach dem amtlichen
+> KoSIT-Regelwerk (XRechnung 3.0.2, EN-16931-Schematron) ohne Java, vollständig offline.
+
+Geeignet für die deutsche E-Rechnungspflicht im B2B (Empfang seit 2025, Ausstellung ab 2027/2028)
+für kleine Betriebe, Büros und Freiberufler, die Rechnungen in Word schreiben. Bedienung in drei
+Schritten: PDF wählen, Angaben prüfen (Pflicht), E-Rechnung erzeugen. Ausgabe: `<Name>_E-Rechnung.pdf`
+mit eingebettetem `factur-x.xml` plus HTML-Prüfbericht.
+
+Kommandozeile (JSON auf stdout, deutsche Feldnamen):
+`e-rechnung auslesen RECHNUNG.pdf`, `e-rechnung erstellen RECHNUNG.pdf --daten DATEN.json [--xrechnung]`,
+`e-rechnung pruefen DATEI.pdf|DATEI.xml`. Installation:
+`pip install "git+https://github.com/caglarbiber90/e-rechnung-zugferd-konverter"`.
+
+## Dokumentation
+
+- [README](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/README.md): Funktionen, Bedienung, häufige Fragen, Prüfung ohne Java
+- [AGENTS.md](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/AGENTS.md): Kommandozeile, JSON-Datenformat, Python-Bibliothek, Regeln für Agenten
+- [Releases](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/releases/latest): fertige `E-Rechnung-Konverter.exe`
+
+## Quelltext
+
+- [src/erechnung/cli.py](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/src/erechnung/cli.py): Befehle `auslesen`, `erstellen`, `pruefen`
+- [src/erechnung/validator.py](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/src/erechnung/validator.py): KoSIT-Prüfung mit lxml und Saxon-HE
+- [src/erechnung/cii.py](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/src/erechnung/cii.py): CII-XML nach EN 16931 / XRechnung
+- [src/erechnung/extract.py](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/src/erechnung/extract.py): Auslesen von PDF-Rechnungen, erweiterbar
+
+## Optional
+
+- [THIRD_PARTY_LICENSES.md](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/THIRD_PARTY_LICENSES.md): Lizenzen der Fremdbestandteile
+- [CONTRIBUTING.md](https://github.com/caglarbiber90/e-rechnung-zugferd-konverter/blob/main/CONTRIBUTING.md): Mitmachen

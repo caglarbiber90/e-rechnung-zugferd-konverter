@@ -4,8 +4,6 @@ dist/
 __pycache__/
 *.pyc
 .pytest_cache/
-# office branding (company logo, not public)
-branding/
 # never commit real invoices or master data
 *.pdf
 !tests/sample/Musterrechnung.pdf

@@ -3,15 +3,10 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 root = Path(SPECPATH)
-datas = [(str(root / "resources" / "kosit"), "resources/kosit")]
+datas = [(str(root / "src" / "erechnung" / "daten"), "erechnung/daten")]
 for pkg in ("facturx", "iso4217", "stdnum"):
     datas += collect_data_files(pkg)
-branding = root / "branding"
-icon = None
-if branding.exists():
-    datas.append((str(branding), "branding"))
-    if (branding / "app.ico").exists():
-        icon = str(branding / "app.ico")
+icon = str(root / "src" / "erechnung" / "daten" / "icon" / "app.ico")
 
 a = Analysis(
     [str(root / "src" / "launcher.py")],
@@ -19,7 +14,7 @@ a = Analysis(
     binaries=collect_dynamic_libs("saxonche"),
     datas=datas,
     hiddenimports=["saxonche", "windnd"],
-    excludes=["fitz", "pymupdf", "numpy", "PIL", "matplotlib", "pytest", "reportlab"],
+    excludes=["PIL", "fitz", "pymupdf", "numpy", "matplotlib", "pytest", "reportlab"],
 )
 pyz = PYZ(a.pure)
 exe = EXE(

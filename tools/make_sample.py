@@ -98,9 +98,11 @@ def pdf(path: Path):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     pdf(OUT / "Musterrechnung.pdf")
-    (OUT / "stammdaten.json").write_text(json.dumps(
-        {"seller": SELLER, "buyers": [BUYER], "write_xrechnung": True}, ensure_ascii=False, indent=2),
-        encoding="utf-8")
+    import sys
+    sys.path.insert(0, str(ROOT / "src"))
+    from erechnung.model import Buyer, Seller
+    from erechnung.settings import Settings
+    Settings(Seller(**SELLER), [Buyer(**BUYER)], write_xrechnung=True).save(OUT / "stammdaten.json")
     print("written:", OUT)
 
 

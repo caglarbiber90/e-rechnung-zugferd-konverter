@@ -1,15 +1,12 @@
-"""Locate bundled files both from source and from a PyInstaller one-file exe."""
+"""Locate bundled data files (KoSIT configuration, icon) from source, pip install or the exe."""
 import sys
 from pathlib import Path
 
-_FROZEN = hasattr(sys, "_MEIPASS")
-_ROOT = Path(sys._MEIPASS) if _FROZEN else Path(__file__).resolve().parents[2]
+if hasattr(sys, "_MEIPASS"):
+    _DATA = Path(sys._MEIPASS) / "erechnung" / "daten"
+else:
+    _DATA = Path(__file__).resolve().parent / "daten"
 
 
 def resource_path(*parts: str) -> Path:
-    return _ROOT.joinpath("resources", *parts)
-
-
-def branding_path(*parts: str) -> Path:
-    """Optional office branding (logo, icon, wordmark); missing in the public repo."""
-    return _ROOT.joinpath("branding", *parts)
+    return _DATA.joinpath(*parts)

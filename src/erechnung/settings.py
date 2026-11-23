@@ -26,16 +26,16 @@ class Settings:
         if not path.exists():
             return cls()
         d = json.loads(path.read_text(encoding="utf-8"))
-        return cls(party_from_dict(Seller, d.get("seller")),
-                   [party_from_dict(Buyer, b) for b in d.get("buyers", [])],
-                   bool(d.get("write_xrechnung", False)))
+        return cls(party_from_dict(Seller, d.get("rechnungssteller", d.get("seller"))),
+                   [party_from_dict(Buyer, b) for b in d.get("kunden", d.get("buyers", []))],
+                   bool(d.get("xrechnung_erzeugen", d.get("write_xrechnung", False))))
 
     def save(self, path: Path | None = None) -> Path:
         path = path or settings_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        d = {"seller": party_to_dict(self.seller),
-             "buyers": [party_to_dict(b) for b in self.buyers],
-             "write_xrechnung": self.write_xrechnung}
+        d = {"rechnungssteller": party_to_dict(self.seller),
+             "kunden": [party_to_dict(b) for b in self.buyers],
+             "xrechnung_erzeugen": self.write_xrechnung}
         path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
         return path
 

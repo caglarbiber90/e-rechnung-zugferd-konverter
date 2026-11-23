@@ -12,14 +12,28 @@ work = Path(tempfile.mkdtemp()); pdf = work / "Musterrechnung.pdf"
 shutil.copy(ROOT / "tests/sample/Musterrechnung.pdf", pdf)
 sys.path.insert(0, str(ROOT / "src"))
 import ctypes; ctypes.windll.shcore.SetProcessDpiAwareness(1)
-from PIL import ImageGrab
 from erechnung import gui
 app = gui.App(); app.geometry("+20+20")
+SHOWN = r"C:\Rechnungen"
+
+
+def neutral_paths(widget):
+    """Replace the real temp folder by a neutral example path in all visible labels."""
+    for w in widget.winfo_children():
+        try:
+            t = w.cget("text")
+            if isinstance(t, str) and str(work) in t:
+                w.configure(text=t.replace(str(work), SHOWN))
+        except Exception:
+            pass
+        neutral_paths(w)
+
+
 def shot(name):
     """PrintWindow: captures the window even when other windows cover it."""
     from ctypes import wintypes, windll, byref, create_string_buffer, sizeof, c_uint32, Structure, c_long, c_ushort
     from PIL import Image
-    app.update()
+    neutral_paths(app); app.update()
     hwnd = windll.user32.GetParent(app.winfo_id())
     r = wintypes.RECT(); windll.user32.GetWindowRect(hwnd, byref(r))
     w, h = r.right - r.left, r.bottom - r.top

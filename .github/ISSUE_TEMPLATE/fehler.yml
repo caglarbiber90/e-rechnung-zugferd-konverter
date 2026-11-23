@@ -1,0 +1,27 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet.
+labels: ["fehler"]
+body:
+  - type: markdown
+    attributes:
+      value: "**Bitte keine echten Rechnungen, Kundendaten, IBANs oder Steuernummern hochladen.**"
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: steht unten links im Programmfenster
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Was haben Sie getan, was haben Sie erwartet, was ist stattdessen passiert?
+    validations:
+      required: true
+  - type: textarea
+    id: regeln
+    attributes:
+      label: Regelcodes aus dem Prüfbericht
+      placeholder: "z. B. BR-CO-15, BR-DE-15"

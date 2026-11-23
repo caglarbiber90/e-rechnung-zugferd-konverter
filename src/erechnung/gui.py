@@ -19,7 +19,7 @@ from .checks import computed_totals, fmt
 from .core import finalize, output_paths, propose
 from .messages_de import explain
 from .model import Buyer, Invoice, Line, Seller
-from .resources import branding_path
+from .resources import resource_path
 from .settings import Settings, settings_path
 
 APP = "E-Rechnung-Konverter"
@@ -104,21 +104,6 @@ def open_path(p: Path):
         os.startfile(str(p))  # type: ignore[attr-defined]
     except Exception:
         subprocess.Popen(["explorer", str(p)])
-
-
-def load_brand() -> dict:
-    d = {"wordmark": "E-RECHNUNG", "logo": None, "icon": None}
-    bj = branding_path("brand.json")
-    if bj.exists():
-        try:
-            d.update(json.loads(bj.read_text(encoding="utf-8")))
-        except Exception:
-            pass
-    if branding_path("logo.png").exists():
-        d["logo"] = branding_path("logo.png")
-    if branding_path("app.ico").exists():
-        d["icon"] = branding_path("app.ico")
-    return d
 
 
 def setup_style(root: tk.Tk):
@@ -332,16 +317,14 @@ class Banner(tk.Frame):
 class App(tk.Tk):
     def __init__(self, initial_pdf: str | None = None):
         super().__init__()
-        self.brand = load_brand()
         self.title(APP)
         self.geometry("1180x800")
         self.minsize(980, 640)
         self.configure(background=BG)
-        if self.brand["icon"]:
-            try:
-                self.iconbitmap(default=str(self.brand["icon"]))
-            except Exception:
-                pass
+        try:
+            self.iconbitmap(default=str(resource_path("icon", "app.ico")))
+        except Exception:
+            pass
         setup_style(self)
         self.settings = Settings.load()
         self.pdf_path: Path | None = None
@@ -364,18 +347,12 @@ class App(tk.Tk):
 
         head = ttk.Frame(side, style="Side.TFrame", padding=(16, 18, 16, 14))
         head.pack(fill="x")
-        if self.brand["logo"]:
-            self._logo = tk.PhotoImage(file=str(self.brand["logo"]))
-            tk.Label(head, image=self._logo, background=SIDE).pack(side="left")
-        else:
-            c = tk.Canvas(head, width=36, height=36, background=SIDE, highlightthickness=0)
-            c.create_rectangle(0, 0, 36, 36, fill=ACCENT, outline=ACCENT)
-            c.create_text(18, 18, text="€", fill="#ffffff", font=(FONT, 15, "bold"))
-            c.pack(side="left")
+        self._logo = tk.PhotoImage(file=str(resource_path("icon", "logo.png")))
+        tk.Label(head, image=self._logo, background=SIDE).pack(side="left")
         txt = ttk.Frame(head, style="Side.TFrame")
         txt.pack(side="left", padx=10)
-        ttk.Label(txt, text=self.brand["wordmark"], style="Mark.TLabel").pack(anchor="w")
-        ttk.Label(txt, text="E-Rechnung-Konverter", style="SideMuted.TLabel").pack(anchor="w")
+        ttk.Label(txt, text="E-Rechnung", style="Mark.TLabel").pack(anchor="w")
+        ttk.Label(txt, text="PDF zu ZUGFeRD", style="SideMuted.TLabel").pack(anchor="w")
         tk.Frame(side, background=LINE, height=1).pack(fill="x", padx=12)
 
         ttk.Label(side, text="ABLAUF", style="SideTitle.TLabel", padding=(20, 16, 0, 6)).pack(anchor="w")
