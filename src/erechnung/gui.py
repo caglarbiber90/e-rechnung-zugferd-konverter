@@ -20,7 +20,7 @@ from .core import finalize, output_paths, propose
 from .messages_de import explain
 from .model import Buyer, Invoice, Line, Seller
 from .resources import resource_path
-from .settings import Settings, settings_path
+from .settings import Settings
 
 APP = "E-Rechnung-Konverter"
 
@@ -44,10 +44,10 @@ FONT = "Segoe UI"
 SELLER_FIELDS = [
     ("name", "Firmenname *"), ("street", "Straße und Hausnummer *"), ("zip", "PLZ *"), ("city", "Ort *"),
     ("country", "Land *"), ("vat_id", "USt-IdNr."), ("tax_no", "Steuernummer"),
-    ("register_id", "Handelsregister (z. B. HRB 12345)"),
-    ("legal_info", "Rechtliche Angaben (Geschäftsführung, Amtsgericht)"),
+    ("register_id", "Handelsregister-Nr."),
+    ("legal_info", "Geschäftsführung, Gericht"),
     ("contact", "Ansprechpartner"), ("phone", "Telefon"), ("contact_email", "E-Mail Ansprechpartner"),
-    ("email", "E-Mail-Adresse für E-Rechnungen"), ("iban", "IBAN *"), ("bic", "BIC"),
+    ("email", "E-Mail für E-Rechnungen"), ("iban", "IBAN *"), ("bic", "BIC"),
     ("account_name", "Kontoinhaber"),
 ]
 BUYER_FIELDS = [
@@ -63,6 +63,13 @@ INVOICE_FIELDS = [
     ("accounting_ref", "PSP-Element / Kostenstelle"), ("project_id", "Projektnummer"),
     ("project_name", "Projektbezeichnung"), ("note", "Bemerkung"),
 ]
+SELLER_SECTIONS = [
+    ("Büro", ["name", "street", "zip", "city", "country"]),
+    ("Steuer und Register", ["vat_id", "tax_no", "register_id", "legal_info"]),
+    ("Ansprechpartner", ["contact", "phone", "contact_email", "email"]),
+    ("Bankverbindung", ["iban", "bic", "account_name"]),
+]
+SELLER_LABELS = dict(SELLER_FIELDS)
 DATE_FIELDS = {"issue_date", "period_start", "period_end", "due_date"}
 UNITS = ["C62", "LS", "HUR", "DAY", "MON", "MTK", "MTR"]
 STEPS = ["PDF-Rechnung wählen", "Angaben prüfen", "Ergebnis"]
@@ -164,8 +171,10 @@ class Form(ttk.Frame):
 
     WIDE = ("legal_info", "note", "payment_terms", "project_name", "name", "street")
 
-    def __init__(self, master, spec, columns=1):
-        super().__init__(master, padding=(16, 12))
+    def __init__(self, master, spec, columns=1, width=None, padding=(16, 12), label_width=0):
+        super().__init__(master, padding=padding)
+        if label_width:
+            self.columnconfigure(0, minsize=label_width)
         self.vars: dict[str, tk.StringVar] = {}
         per_col = -(-len(spec) // columns)
         for i, (key, label) in enumerate(spec):
@@ -173,8 +182,11 @@ class Form(ttk.Frame):
             ttk.Label(self, text=label).grid(row=row, column=col * 2, sticky="w", pady=3,
                                              padx=(0 if col == 0 else 28, 12))
             v = tk.StringVar()
-            width = (34 if columns > 1 else 64) if key in self.WIDE else (22 if columns > 1 else 36)
-            ttk.Entry(self, textvariable=v, width=width).grid(row=row, column=col * 2 + 1, sticky="w", pady=3)
+            w = width or ((34 if columns > 1 else 64) if key in self.WIDE else (22 if columns > 1 else 36))
+            ttk.Entry(self, textvariable=v, width=w).grid(row=row, column=col * 2 + 1,
+                                                          sticky="we" if width else "w", pady=3)
+            if width:
+                self.columnconfigure(col * 2 + 1, weight=1)
             self.vars[key] = v
 
     def get(self, key):
@@ -182,40 +194,6 @@ class Form(ttk.Frame):
 
     def set(self, key, value):
         self.vars[key].set("" if value is None else str(value))
-
-
-class SettingsDialog(tk.Toplevel):
-    def __init__(self, master, settings: Settings, first_run=False):
-        super().__init__(master, background=BG)
-        self.title("Stammdaten des Rechnungsstellers")
-        self.settings = settings
-        self.transient(master)
-        ttk.Label(self, text="Stammdaten des Rechnungsstellers", style="H1.TLabel",
-                  padding=(16, 14, 16, 0)).pack(anchor="w")
-        intro = ("Willkommen. Bitte tragen Sie einmalig die Daten Ihres Büros ein. Sie werden gespeichert "
-                 "und in jede E-Rechnung übernommen." if first_run else
-                 "Diese Angaben werden in jede E-Rechnung übernommen.")
-        ttk.Label(self, text=intro + " Felder mit * sind Pflicht.", style="Muted.TLabel", wraplength=620,
-                  padding=(16, 4)).pack(anchor="w")
-        self.form = Form(self, SELLER_FIELDS, columns=2)
-        self.form.pack(fill="both", expand=True)
-        for key, _ in SELLER_FIELDS:
-            self.form.set(key, getattr(settings.seller, key))
-        ttk.Label(self, style="Muted.TLabel", padding=(16, 0),
-                  text=f"Gespeichert in: {settings_path()}").pack(anchor="w")
-        bar = ttk.Frame(self, padding=16)
-        bar.pack(fill="x")
-        ttk.Button(bar, text="Speichern", style="Accent.TButton", command=self.save).pack(side="right")
-        ttk.Button(bar, text="Abbrechen", command=self.destroy).pack(side="right", padx=8)
-        self.grab_set()
-
-    def save(self):
-        s = Seller(**{k: self.form.get(k) for k, _ in SELLER_FIELDS})
-        s.iban = s.iban.replace(" ", "").upper()
-        s.country = (s.country or "DE").upper()
-        self.settings.seller = s
-        self.settings.save()
-        self.destroy()
 
 
 class LinesTable(ttk.Frame):
@@ -318,7 +296,10 @@ class App(tk.Tk):
     def __init__(self, initial_pdf: str | None = None):
         super().__init__()
         self.title(APP)
-        self.geometry("1180x800")
+        w, h = 1180, 800
+        x = max(0, (self.winfo_screenwidth() - w) // 2)
+        y = max(0, (self.winfo_screenheight() - h) // 2 - 20)
+        self.geometry(f"{w}x{h}+{x}+{y}")
         self.minsize(980, 640)
         self.configure(background=BG)
         try:
@@ -331,10 +312,11 @@ class App(tk.Tk):
         self.last_outcome = None
         self.max_step = 0
         self._build()
-        self.show_step(0)
         self._enable_drop()
-        if not self.settings.seller.name:
-            self.after(300, lambda: self.edit_settings(first_run=True))
+        if self.settings.seller.name:
+            self.show_step(0)
+        else:
+            self.edit_settings(first_run=True)
         if initial_pdf:
             self.after(500, lambda: self.load_pdf(Path(initial_pdf)))
 
@@ -365,7 +347,8 @@ class App(tk.Tk):
             lbl = tk.Label(f, text=name, anchor="w", font=(FONT, 10), background=SIDE)
             lbl.pack(side="left", fill="x", expand=True)
             for w in (f, num, lbl):
-                w.bind("<Button-1>", lambda _e, i=i: self.show_step(i) if i <= self.max_step else None)
+                w.bind("<Button-1>", lambda _e, i=i: self.show_step(i)
+                       if i <= self.max_step and self.settings.seller.name else None)
             self.step_btns.append((f, num, lbl))
 
         foot = ttk.Frame(side, style="Side.TFrame", padding=16)
@@ -379,12 +362,17 @@ class App(tk.Tk):
         self.main = ttk.Frame(self)
         self.main.pack(side="left", fill="both", expand=True)
         self.pages = [self._page_choose(), self._page_review(), self._page_result()]
+        self.settings_page = self._page_settings()
 
-    def show_step(self, i: int):
-        self.max_step = max(self.max_step, i)
-        for p in self.pages:
+    def _show_page(self, page):
+        for p in self.pages + [self.settings_page]:
             p.pack_forget()
-        self.pages[i].pack(fill="both", expand=True)
+        page.pack(fill="both", expand=True)
+
+    def show_step(self, i):
+        if i is not None:
+            self.max_step = max(self.max_step, i)
+            self._show_page(self.pages[i])
         for j, (f, num, lbl) in enumerate(self.step_btns):
             active = j == i
             bg = ACCENT_SOFT if active else SIDE
@@ -400,6 +388,72 @@ class App(tk.Tk):
         ttk.Label(p, text=subtitle, style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w",
                                                                                             pady=(2, 14))
         return p
+
+    # ---------- master data page ----------
+    def _page_settings(self):
+        p = ttk.Frame(self.main, padding=(28, 22, 28, 18))
+        self.set_title = ttk.Label(p, text="", style="H1.TLabel")
+        self.set_title.pack(anchor="w")
+        self.set_intro = ttk.Label(p, text="", style="Muted.TLabel", wraplength=860, justify="left")
+        self.set_intro.pack(anchor="w", pady=(2, 12))
+        self.set_msg = Banner(p)
+        bar = ttk.Frame(p)
+        bar.pack(side="bottom", fill="x", pady=(12, 0))
+        ttk.Button(bar, text="Speichern", style="Accent.TButton", command=self.save_settings).pack(side="right")
+        self.set_cancel = ttk.Button(bar, text="Abbrechen", command=lambda: self.show_step(0))
+        ttk.Label(bar, style="Muted.TLabel",
+                  text="Die Angaben werden nur auf diesem Rechner gespeichert.").pack(side="left")
+        self.set_grid = grid = ttk.Frame(p)
+        grid.pack(fill="both", expand=True)
+        self.set_forms = []
+        for n, (title, keys) in enumerate(SELLER_SECTIONS):
+            box = ttk.LabelFrame(grid, text=f"  {title.upper()}  ", padding=(12, 6))
+            box.grid(row=n // 2, column=n % 2, sticky="nsew", pady=6,
+                     padx=(0, 8) if n % 2 == 0 else (8, 0))
+            f = Form(box, [(k, SELLER_LABELS[k]) for k in keys], width=30, padding=(4, 4), label_width=190)
+            f.pack(fill="both", expand=True)
+            self.set_forms.append(f)
+        grid.columnconfigure(0, weight=1, uniform="c")
+        grid.columnconfigure(1, weight=1, uniform="c")
+        return p
+
+    def _set_get(self, key):
+        return next(f.get(key) for f in self.set_forms if key in f.vars)
+
+    def edit_settings(self, first_run=False):
+        if first_run:
+            self.set_title.configure(text="Willkommen beim E-Rechnung-Konverter")
+            self.set_intro.configure(text="Bitte tragen Sie einmalig die Daten Ihres Büros ein. Sie werden "
+                                          "in jede E-Rechnung übernommen. Felder mit * sind Pflicht.")
+            self.set_cancel.pack_forget()
+        else:
+            self.set_title.configure(text="Stammdaten des Rechnungsstellers")
+            self.set_intro.configure(text="Diese Angaben werden in jede E-Rechnung übernommen. "
+                                          "Felder mit * sind Pflicht.")
+            self.set_cancel.pack(side="right", padx=8)
+        for f in self.set_forms:
+            for k in f.vars:
+                f.set(k, getattr(self.settings.seller, k))
+        self.set_msg.pack_forget()
+        self._show_page(self.settings_page)
+        self.show_step(None)
+
+    def save_settings(self):
+        s = Seller(**{k: self._set_get(k) for k, _ in SELLER_FIELDS})
+        s.iban = s.iban.replace(" ", "").upper()
+        s.country = (s.country or "DE").upper()
+        missing = [SELLER_LABELS[k].rstrip(" *") for k in ("name", "street", "zip", "city", "iban")
+                   if not getattr(s, k)]
+        if not (s.vat_id or s.tax_no):
+            missing.append("USt-IdNr. oder Steuernummer")
+        if missing:
+            self.set_msg.show("error", "Bitte noch ausfüllen:", missing)
+            self.set_msg.pack(fill="x", pady=(0, 8), before=self.set_grid)
+            return
+        self.settings.seller = s
+        self.settings.save()
+        self.refresh_seller()
+        self.show_step(0)
 
     # ---------- page 1 ----------
     def _page_choose(self):
@@ -552,11 +606,6 @@ class App(tk.Tk):
                 self.buyer_form.set(k, getattr(b, k))
             if b.buyer_reference:
                 self.inv_form.set("buyer_reference", b.buyer_reference)
-
-    def edit_settings(self, first_run=False):
-        dlg = SettingsDialog(self, self.settings, first_run)
-        self.wait_window(dlg)
-        self.refresh_seller()
 
     def choose_pdf(self):
         p = filedialog.askopenfilename(title="PDF-Rechnung wählen", filetypes=[("PDF-Dateien", "*.pdf")])

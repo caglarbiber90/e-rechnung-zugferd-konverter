@@ -1,13 +1,17 @@
 """Drive the GUI through all three steps on the fictitious sample and save screenshots.
 Uses a temporary APPDATA so real master data is never touched.
-Usage: py -3 tools/gui_shots.py <out_dir>"""
+Usage: py -3 tools/gui_shots.py <out_dir> [--erststart]
+  --erststart  start without master data: shows the welcome page, the missing-field
+               message, then fills in the fictitious seller and continues."""
 import os, shutil, sys, tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
 appdata = Path(tempfile.mkdtemp()); os.environ["APPDATA"] = str(appdata)
+FIRST = "--erststart" in sys.argv
 (appdata / "E-Rechnung-Konverter").mkdir()
-shutil.copy(ROOT / "tests/sample/stammdaten.json", appdata / "E-Rechnung-Konverter/stammdaten.json")
+if not FIRST:
+    shutil.copy(ROOT / "tests/sample/stammdaten.json", appdata / "E-Rechnung-Konverter/stammdaten.json")
 work = Path(tempfile.mkdtemp()); pdf = work / "Musterrechnung.pdf"
 shutil.copy(ROOT / "tests/sample/Musterrechnung.pdf", pdf)
 sys.path.insert(0, str(ROOT / "src"))
@@ -49,7 +53,18 @@ def shot(name):
     windll.gdi32.GetDIBits(mdc, bmp, 0, h, buf, byref(bi), 0)
     Image.frombuffer("RGB", (w, h), buf, "raw", "BGRX", 0, 1).save(out / name)
     windll.gdi32.DeleteObject(bmp); windll.gdi32.DeleteDC(mdc); windll.user32.ReleaseDC(hwnd, hdc)
-seq = [lambda: shot("1_waehlen.png"), lambda: app.load_pdf(pdf), lambda: shot("2_pruefen.png"),
+def fill_seller():
+    from erechnung.settings import Settings
+    sample = Settings.load(ROOT / "tests/sample/stammdaten.json").seller
+    for f in app.set_forms:
+        for k in f.vars:
+            f.set(k, getattr(sample, k))
+    app.settings.buyers = Settings.load(ROOT / "tests/sample/stammdaten.json").buyers
+
+
+first = [lambda: shot("0_willkommen.png"), lambda: app.save_settings(), lambda: shot("0b_fehlt.png"),
+         fill_seller, lambda: app.save_settings()] if FIRST else []
+seq = first + [lambda: shot("1_waehlen.png"), lambda: app.load_pdf(pdf), lambda: shot("2_pruefen.png"),
        lambda: app.review_nb.select(2), lambda: shot("2b_positionen.png"), lambda: app.review_nb.select(1), lambda: shot("2c_empfaenger.png"),
        lambda: app.generate()]
 def step(i=0):

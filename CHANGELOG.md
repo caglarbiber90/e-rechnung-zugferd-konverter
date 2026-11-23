@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.1.1 (23.11.2026)
+
+- Erster Start: Die Stammdaten werden jetzt im Programmfenster abgefragt, übersichtlich in vier Bereichen (Büro, Steuer und Register, Ansprechpartner, Bankverbindung), statt in einem separaten Fenster in der Bildschirmecke.
+- Fehlende Pflichtangaben werden direkt im Formular angezeigt.
+- Das Programmfenster öffnet sich in der Bildschirmmitte.
+
 ## 0.1.0 (23.11.2026)
 
 Erste Version.
