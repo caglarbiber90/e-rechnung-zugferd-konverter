@@ -7,11 +7,11 @@ Stand 23.11.2026 (Version 0.1.0):
 - Exe gebaut und auf der fiktiven Musterrechnung getestet, auch per Gegenprobe mit dem
   Java-KoSIT-Validator 1.6.3 (gleiches Ergebnis, gleiche Regelcodes in 11 Testdateien).
 - Alles für Anwender auf Deutsch, neutrales eigenes Symbol, keine Firmenlogos.
-- Repository vorbereitet für GitHub (README, AGENTS.md, llms.txt, Tests- und Release-Workflow).
-- Noch nicht veröffentlicht.
+- Veröffentlicht am 23.11.2026: github.com/caglarbiber90/e-rechnung-zugferd-konverter, Release v0.1.0
+  mit der in GitHub Actions gebauten .exe (Selbsttest im Workflow bestanden).
 
 Offen:
-- Veröffentlichung auf GitHub, erstes Release v0.1.0 mit der .exe.
+- Bekanntmachen (Foren, LinkedIn, Listen); Texte vorbereiten, Çağlar veröffentlicht selbst.
 - Test mit weiteren Rechnungsvorlagen.
 - PDF/A-Konformität wird nicht geprüft; Empfehlung ist der PDF/A-Export aus Word.
 - Nicht unterstützt: 0 % USt, Reverse Charge, Rabatte, Gutschriften, andere Layouts.
