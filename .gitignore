@@ -1,0 +1,17 @@
+# build output
+build/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+# office branding (company logo, not public)
+branding/
+# never commit real invoices or master data
+*.pdf
+!tests/sample/Musterrechnung.pdf
+stammdaten.json
+!tests/sample/stammdaten.json
+*_E-Rechnung*
+*_XRechnung.xml
+selftest.log
+.worktrees/
